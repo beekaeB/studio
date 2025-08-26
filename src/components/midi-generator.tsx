@@ -20,7 +20,7 @@ const formSchema = z.object({
   }).max(500, {
     message: "Prompt must not be longer than 500 characters."
   }),
-  duration: z.number().min(5).max(60),
+  duration: z.number().min(5).max(600),
 });
 
 export function MidiGenerator() {
@@ -159,7 +159,7 @@ export function MidiGenerator() {
                     <div className="flex items-center gap-4">
                       <Slider
                         min={5}
-                        max={60}
+                        max={600}
                         step={1}
                         value={[field.value]}
                         onValueChange={(vals) => field.onChange(vals[0])}
