@@ -30,42 +30,49 @@ export async function generateMidi(input: GenerateMidiInput): Promise<GenerateMi
   return generateMidiFlow(input);
 }
 
-const generateMidiPrompt = ai.definePrompt({
-  name: 'generateMidiPrompt',
-  input: {schema: GenerateMidiInputSchema},
-  output: {schema: GenerateMidiOutputSchema},
-  prompt: `You are a creative MIDI music generation expert.
-Your task is to generate a Javascript function that creates and returns an array of MidiWriter.Track objects based on the user's prompt.
+const generateMidiPrompt = ai.definePrompt(
+  {
+    name: 'generateMidiPrompt',
+    input: { schema: GenerateMidiInputSchema },
+    output: { schema: GenerateMidiOutputSchema },
+  },
+  async (input) => ({
+    messages: [
+      {
+        role: 'system',
+        content: [{ text: `You are a creative MIDI music generation expert.
+Your task is to generate a Javascript function that creates and returns an array of MidiWriter.Track objects.
 You MUST use the midi-writer-js ^2.x API.
 You will also write a brief, one-paragraph description of the musical piece you are creating.
-The generated music should be approximately {{{duration}}} seconds long.
+The generated music should be approximately ${input.duration} seconds long.
 
 The Javascript function you generate MUST be a complete, self-contained function that accepts one argument: 'MidiWriter'.
 The function should not contain any markdown formatting.
 Do not invoke the function, just define it.
+The function body should only contain track creation and \`addEvent\` calls with \`NoteEvent\`. No other logic is allowed.
 
 Example output format for midi-writer-js v2:
-\'\'\'javascript
+\`\`\`javascript
 function(MidiWriter) {
   const track = new MidiWriter.Track();
   track.addEvent(new MidiWriter.NoteEvent({pitch: ['C4', 'E4', 'G4'], duration: '1'}));
   return [track];
 }
-\'\'\'
-
-User prompt: {{{prompt}}}
-`,
-});
+\`\`\``}],
+      },
+      {
+        role: 'user',
+        content: [{ text: input.prompt }],
+      },
+    ],
+  })
+);
 
 const generateMidiFlow = ai.defineFlow(
   {
     name: 'generateMidiFlow',
     inputSchema: GenerateMidiInputSchema,
-    outputSchema: GenerateMidiOutputSchema,
-    rateLimit: {
-        requests: 7,
-        per: 'minute'
-    }
+    outputSchema: GenerateMidiOutputSchema
   },
   async (input) => {
     const {output} = await generateMidiPrompt(input);
@@ -79,6 +86,12 @@ const generateMidiFlow = ai.defineFlow(
     
     if (!cleanedMidiData.startsWith('function(MidiWriter)')) {
         throw new Error('AI returned MIDI data in an unexpected format. Please try again.');
+    }
+
+    // Security validation: check for forbidden keywords in the generated code.
+    const forbiddenKeywords = ['fetch', 'XMLHttpRequest', 'eval', 'Function', 'document', 'window', 'localStorage', 'sessionStorage', 'script', '<script>', 'import', 'require'];
+    if (forbiddenKeywords.some(keyword => cleanedMidiData.includes(keyword))) {
+        throw new Error('AI returned potentially unsafe code.');
     }
 
     return {
