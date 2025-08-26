@@ -1,12 +1,8 @@
 'use server';
 
-import {
-  generateMidi,
-} from '@/ai/flows/generate-midi-from-prompt';
-import { type GenerateMidiInput } from '@/ai/flows/types';
+import {generateMidiFlow} from '@/ai/flows/generate-midi-from-prompt';
+import {type GenerateMidiInput} from '@/ai/flows/types';
 
-// Helper function to get the API key from environment variables.
-// Throws an error if the key is not found.
 function getApiKey(): string {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey || apiKey === 'YOUR_API_KEY_HERE') {
@@ -22,13 +18,12 @@ export async function generateMidiAction(
 ): Promise<{midiData: string; description: string} | {error: string}> {
   try {
     const apiKey = getApiKey();
-    const result = await generateMidi(input, {apiKey});
-    if (!result.midiData || !result.description) {
-      throw new Error('AI failed to generate a valid response. Please try a different prompt.');
-    }
+    const result = await generateMidiFlow(input, {apiKey});
+    // The result from the flow is already validated, so we can return it directly.
     return {midiData: result.midiData, description: result.description};
   } catch (e: any) {
     console.error('Error in generateMidiAction:', e);
+    // Ensure a user-friendly message is always returned.
     const message =
       e instanceof Error
         ? e.message

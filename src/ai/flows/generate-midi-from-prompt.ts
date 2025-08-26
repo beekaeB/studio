@@ -6,16 +6,11 @@
  * to generate a description of the song and the corresponding MIDI data, which is then 
  * compiled into a playable .mid file that the user can download.
  *
- * @exports generateMidi - The main function to generate MIDI files from prompts.
+ * @exports generateMidiFlow - The main flow to generate MIDI files from prompts.
  */
 
 import {ai} from '@/ai/genkit';
 import { GenerateMidiInputSchema, GenerateMidiOutputSchema, GenerateMidiInput, GenerateMidiOutput } from './types';
-
-
-export async function generateMidi(input: GenerateMidiInput, options: {apiKey: string}): Promise<GenerateMidiOutput> {
-  return generateMidiFlow(input, options);
-}
 
 const generateMidiPrompt = ai.definePrompt({
   name: 'generateMidiPrompt',
@@ -44,7 +39,7 @@ User prompt: {{{prompt}}}
 `,
 });
 
-const generateMidiFlow = ai.defineFlow(
+export const generateMidiFlow = ai.defineFlow(
   {
     name: 'generateMidiFlow',
     inputSchema: GenerateMidiInputSchema,
