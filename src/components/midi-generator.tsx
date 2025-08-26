@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import MidiWriter from "midi-writer-js";
 import { Loader2, Music, Download } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -22,9 +21,31 @@ const formSchema = z.object({
   }),
 });
 
-const downloadMidi = (midiJsCode: string) => {
+export function MidiGenerator() {
+  const [isLoading, setIsLoading] = useState(false);
+  const [midiJsCode, setMidiJsCode] = useState<string | null>(null);
+  const { toast } = useToast();
+  const [MidiWriter, setMidiWriter] = useState<any>(null);
+
+  useEffect(() => {
+    import('midi-writer-js').then(module => {
+      setMidiWriter(module.default);
+    });
+  }, []);
+
+  const downloadMidi = useCallback((midiJsCode: string) => {
+    if (!MidiWriter) {
+        toast({
+            variant: "destructive",
+            title: "MIDI library not loaded",
+            description: "The MIDI library is still loading. Please try again in a moment.",
+        });
+        return;
+    }
     try {
-      const buildTracks = new Function('MidiWriter', `return (${midiJsCode})`);
+      // The AI now returns a string that is a full function definition.
+      // We wrap it in parentheses and call it to get the function, then execute it.
+      const buildTracks = new Function(`return (${midiJsCode})`)();
       const tracks = buildTracks(MidiWriter);
       
       const writer = new MidiWriter.Writer(tracks);
@@ -38,14 +59,14 @@ const downloadMidi = (midiJsCode: string) => {
       document.body.removeChild(link);
     } catch (error) {
       console.error("Error processing generated MIDI code:", error);
-      throw new Error("There was an error creating the MIDI file from the generated code. The AI might have provided an invalid format.");
+      toast({
+        variant: "destructive",
+        title: "Download Failed",
+        description: "There was an error creating the MIDI file from the generated code. The AI might have provided an invalid format.",
+      });
     }
-}
+  }, [MidiWriter, toast]);
 
-export function MidiGenerator() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [midiJsCode, setMidiJsCode] = useState<string | null>(null);
-  const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -117,7 +138,7 @@ export function MidiGenerator() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full text-lg py-6" disabled={isLoading}>
+            <Button type="submit" className="w-full text-lg py-6" disabled={isLoading || !MidiWriter}>
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />

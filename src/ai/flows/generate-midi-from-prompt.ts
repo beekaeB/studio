@@ -19,7 +19,7 @@ const GenerateMidiInputSchema = z.object({
 export type GenerateMidiInput = z.infer<typeof GenerateMidiInputSchema>;
 
 const GenerateMidiOutputSchema = z.object({
-  midiData: z.string().describe('The generated MIDI data as a Base64 string.'),
+  midiData: z.string().describe('A self-contained Javascript function that returns an array of MidiWriter.Track objects.'),
 });
 export type GenerateMidiOutput = z.infer<typeof GenerateMidiOutputSchema>;
 
@@ -31,8 +31,23 @@ const generateMidiPrompt = ai.definePrompt({
   name: 'generateMidiPrompt',
   input: {schema: GenerateMidiInputSchema},
   output: {schema: GenerateMidiOutputSchema},
-  prompt: `You are a music expert. Based on the user's request: '{{{prompt}}}', generate only the JavaScript code for an array of tracks compatible with the midi-writer-js library. Example: new MidiWriter.Track().addEvent(new MidiWriter.NoteEvent(...)); Do not include any comments or explanations, only the javascript code. Return the result as a JSON object with a single key 'midiData' that contains the javascript code string.
-`
+  prompt: `You are a MIDI music generation expert.
+Your task is to generate a Javascript function that creates and returns an array of MidiWriter.Track objects based on the user's prompt.
+The function you generate MUST be a complete, self-contained Javascript function that accepts one argument: 'MidiWriter'.
+The function should not contain any markdown formatting.
+Do not invoke the function, just define it.
+
+Example output format:
+\`\`\`javascript
+function(MidiWriter) {
+  const track = new MidiWriter.Track();
+  track.addEvent(new MidiWriter.NoteEvent({pitch: ['C4', 'E4', 'G4'], duration: '1'}));
+  return [track];
+}
+\`\`\`
+
+User prompt: {{{prompt}}}
+`,
 });
 
 const generateMidiFlow = ai.defineFlow(
@@ -41,7 +56,7 @@ const generateMidiFlow = ai.defineFlow(
     inputSchema: GenerateMidiInputSchema,
     outputSchema: GenerateMidiOutputSchema,
   },
-  async input => {
+  async (input) => {
     const {output} = await generateMidiPrompt(input);
     return output!;
   }
