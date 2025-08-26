@@ -13,8 +13,8 @@ import {ai} from '@/ai/genkit';
 import { GenerateMidiInputSchema, GenerateMidiOutputSchema, GenerateMidiInput, GenerateMidiOutput } from './types';
 
 
-export async function generateMidi(input: GenerateMidiInput): Promise<GenerateMidiOutput> {
-  return generateMidiFlow(input);
+export async function generateMidi(input: GenerateMidiInput, options: {apiKey: string}): Promise<GenerateMidiOutput> {
+  return generateMidiFlow(input, options);
 }
 
 const generateMidiPrompt = ai.definePrompt({
@@ -54,8 +54,14 @@ const generateMidiFlow = ai.defineFlow(
         per: 'minute'
     }
   },
-  async (input) => {
-    const {output} = await generateMidiPrompt(input);
+  async (input, options) => {
+    const {output} = await generateMidiPrompt(input, {
+        plugins: {
+            googleai: {
+                apiKey: options.apiKey,
+            }
+        }
+    });
     
     if (!output?.midiData || !output?.description) {
       throw new Error('AI failed to generate a valid response. Please try a different prompt.');
