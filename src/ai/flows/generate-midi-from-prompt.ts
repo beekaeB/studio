@@ -45,13 +45,13 @@ The function should not contain any markdown formatting.
 Do not invoke the function, just define it.
 
 Example output format for midi-writer-js v2:
-\`\`\`javascript
+\'\'\'javascript
 function(MidiWriter) {
   const track = new MidiWriter.Track();
   track.addEvent(new MidiWriter.NoteEvent({pitch: ['C4', 'E4', 'G4'], duration: '1'}));
   return [track];
 }
-\`\`\`
+\'\'\'
 
 User prompt: {{{prompt}}}
 `,
