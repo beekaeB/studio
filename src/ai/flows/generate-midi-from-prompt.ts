@@ -17,23 +17,23 @@ const generateMidiPrompt = ai.definePrompt({
   input: {schema: GenerateMidiInputSchema},
   output: {schema: GenerateMidiOutputSchema},
   prompt: `You are a creative MIDI music generation expert.
-Your task is to generate a Javascript function that creates and returns an array of MidiWriter.Track objects based on the user's prompt.
-You MUST use the midi-writer-js ^2.x API.
-You will also write a brief, one-paragraph description of the musical piece you are creating.
+Your task is to generate a Javascript function that creates and returns an array of MidiWriter.Track objects based on the user's prompt, and also write a brief, one-paragraph description of the musical piece.
+
+You MUST return a valid JSON object with the following structure:
+{
+  "description": "A brief, one-paragraph description of the musical piece.",
+  "midiData": "A string containing a self-contained Javascript function that uses the midi-writer-js ^2.x API to generate the MIDI music."
+}
+
+The Javascript function in the 'midiData' field MUST:
+- Be a complete, self-contained function that accepts one argument: 'MidiWriter'.
+- Not contain any markdown formatting (e.g., \`\`\`javascript).
+- Not be invoked, only defined.
+
 The generated music should be approximately {{{duration}}} seconds long.
 
-The Javascript function you generate MUST be a complete, self-contained function that accepts one argument: 'MidiWriter'.
-The function should not contain any markdown formatting.
-Do not invoke the function, just define it.
-
-Example output format for midi-writer-js v2:
-\'\'\'javascript
-function(MidiWriter) {
-  const track = new MidiWriter.Track();
-  track.addEvent(new MidiWriter.NoteEvent({pitch: ['C4', 'E4', 'G4'], duration: '1'}));
-  return [track];
-}
-\'\'\'
+Example Javascript function for the 'midiData' field:
+"function(MidiWriter) { const track = new MidiWriter.Track(); track.addEvent(new MidiWriter.NoteEvent({pitch: ['C4', 'E4', 'G4'], duration: '1'})); return [track]; }"
 
 User prompt: {{{prompt}}}
 `,
@@ -49,14 +49,8 @@ export const generateMidiFlow = ai.defineFlow(
         per: 'minute'
     }
   },
-  async (input, options) => {
-    const {output} = await generateMidiPrompt(input, {
-        plugins: {
-            googleai: {
-                apiKey: options.apiKey,
-            }
-        }
-    });
+  async (input) => {
+    const {output} = await generateMidiPrompt(input);
     
     if (!output?.midiData || !output?.description) {
       throw new Error('AI failed to generate a valid response. Please try a different prompt.');

@@ -3,22 +3,11 @@
 import {generateMidiFlow} from '@/ai/flows/generate-midi-from-prompt';
 import {type GenerateMidiInput} from '@/ai/flows/types';
 
-function getApiKey(): string {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey || apiKey === 'YOUR_API_KEY_HERE') {
-    throw new Error(
-      'The GEMINI_API_KEY environment variable is not set. Please add it to your .env file.'
-    );
-  }
-  return apiKey;
-}
-
 export async function generateMidiAction(
   input: GenerateMidiInput
 ): Promise<{midiData: string; description: string} | {error: string}> {
   try {
-    const apiKey = getApiKey();
-    const result = await generateMidiFlow(input, {apiKey});
+    const result = await generateMidiFlow(input);
     // The result from the flow is already validated, so we can return it directly.
     return {midiData: result.midiData, description: result.description};
   } catch (e: any) {
