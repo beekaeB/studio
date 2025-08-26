@@ -4,12 +4,13 @@ import { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Loader2, Music, Download } from "lucide-react";
+import { Loader2, Music, Download, FileText } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
+import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { generateMidiAction } from "@/app/actions";
 
@@ -19,11 +20,13 @@ const formSchema = z.object({
   }).max(500, {
     message: "Prompt must not be longer than 500 characters."
   }),
+  duration: z.number().min(5).max(60),
 });
 
 export function MidiGenerator() {
   const [isLoading, setIsLoading] = useState(false);
   const [midiJsCode, setMidiJsCode] = useState<string | null>(null);
+  const [description, setDescription] = useState<string | null>(null);
   const { toast } = useToast();
   const [MidiWriter, setMidiWriter] = useState<any>(null);
 
@@ -72,14 +75,19 @@ export function MidiGenerator() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       prompt: "",
+      duration: 15,
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     setMidiJsCode(null);
+    setDescription(null);
 
-    const result = await generateMidiAction({ prompt: values.prompt });
+    const result = await generateMidiAction({ 
+      prompt: values.prompt,
+      duration: values.duration,
+    });
 
     if ("error" in result) {
       toast({
@@ -89,9 +97,10 @@ export function MidiGenerator() {
       });
     } else {
       setMidiJsCode(result.midiData);
+      setDescription(result.description);
       toast({
         title: "Melody Generated!",
-        description: "Your MIDI file is ready for download.",
+        description: "Your song description and MIDI file are ready.",
       });
     }
     setIsLoading(false);
@@ -121,12 +130,13 @@ export function MidiGenerator() {
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <FormField
               control={form.control}
               name="prompt"
               render={({ field }) => (
                 <FormItem>
+                  <FormLabel className="font-semibold text-base">Your Musical Idea</FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder="e.g., a fast, ascending A minor harmonic scale on a violin"
@@ -138,6 +148,31 @@ export function MidiGenerator() {
                 </FormItem>
               )}
             />
+
+            <FormField
+              control={form.control}
+              name="duration"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="font-semibold text-base">Song Length (seconds)</FormLabel>
+                   <FormControl>
+                    <div className="flex items-center gap-4">
+                      <Slider
+                        min={5}
+                        max={60}
+                        step={1}
+                        value={[field.value]}
+                        onValueChange={(vals) => field.onChange(vals[0])}
+                        className="w-full"
+                      />
+                      <span className="font-mono text-lg w-12 text-center">{field.value}s</span>
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
             <Button type="submit" className="w-full text-lg py-6" disabled={isLoading || !MidiWriter}>
               {isLoading ? (
                 <>
@@ -151,12 +186,17 @@ export function MidiGenerator() {
           </form>
         </Form>
       </CardContent>
-      {midiJsCode && (
-        <CardFooter className="flex flex-col gap-2">
-          <Button onClick={handleDownload} className="w-full" variant="outline">
-            <Download className="mr-2 h-5 w-5" />
-            Download MIDI
-          </Button>
+
+      {description && (
+        <CardFooter className="flex flex-col gap-4 items-start border-t pt-6">
+            <CardTitle className="flex items-center gap-2 text-2xl"><FileText className="h-6 w-6"/> Song Description</CardTitle>
+            <p className="text-muted-foreground">{description}</p>
+             {midiJsCode && (
+                <Button onClick={handleDownload} className="w-full mt-4" variant="outline">
+                    <Download className="mr-2 h-5 w-5" />
+                    Download MIDI
+                </Button>
+            )}
         </CardFooter>
       )}
     </Card>
