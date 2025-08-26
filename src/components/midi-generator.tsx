@@ -22,6 +22,26 @@ const formSchema = z.object({
   }),
 });
 
+const downloadMidi = (midiJsCode: string) => {
+    try {
+      const buildTracks = new Function('MidiWriter', `return (${midiJsCode})`);
+      const tracks = buildTracks(MidiWriter);
+      
+      const writer = new MidiWriter.Writer(tracks);
+      const dataUri = writer.dataUri();
+      
+      const link = document.createElement('a');
+      link.href = dataUri;
+      link.download = 'MidiGenius_output.mid';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Error processing generated MIDI code:", error);
+      throw new Error("There was an error creating the MIDI file from the generated code. The AI might have provided an invalid format.");
+    }
+}
+
 export function MidiGenerator() {
   const [isLoading, setIsLoading] = useState(false);
   const [midiJsCode, setMidiJsCode] = useState<string | null>(null);
@@ -58,26 +78,13 @@ export function MidiGenerator() {
 
   function handleDownload() {
     if (!midiJsCode) return;
-
     try {
-      const buildTracks = new Function('MidiWriter', `return (${midiJsCode})`);
-      const tracks = buildTracks(MidiWriter);
-      
-      const writer = new MidiWriter.Writer(tracks);
-      const dataUri = writer.dataUri();
-      
-      const link = document.createElement('a');
-      link.href = dataUri;
-      link.download = 'MidiGenius_output.mid';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (error) {
-      console.error("Error processing generated MIDI code:", error);
-      toast({
+      downloadMidi(midiJsCode);
+    } catch (e: any) {
+       toast({
         variant: "destructive",
         title: "Download Failed",
-        description: "There was an error creating the MIDI file from the generated code. The AI might have provided an invalid format.",
+        description: e.message,
       });
     }
   }
