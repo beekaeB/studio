@@ -58,6 +58,9 @@ const generateMidiFlow = ai.defineFlow(
   },
   async (input) => {
     const {output} = await generateMidiPrompt(input);
-    return output!;
+    if (!output) {
+      throw new Error('AI failed to generate MIDI data.');
+    }
+    return output;
   }
 );
