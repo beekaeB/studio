@@ -36,6 +36,7 @@ const generateMidiPrompt = ai.definePrompt({
   output: {schema: GenerateMidiOutputSchema},
   prompt: `You are a creative MIDI music generation expert.
 Your task is to generate a Javascript function that creates and returns an array of MidiWriter.Track objects based on the user's prompt.
+You MUST use the midi-writer-js ^2.x API.
 You will also write a brief, one-paragraph description of the musical piece you are creating.
 The generated music should be approximately {{{duration}}} seconds long.
 
@@ -43,7 +44,7 @@ The Javascript function you generate MUST be a complete, self-contained function
 The function should not contain any markdown formatting.
 Do not invoke the function, just define it.
 
-Example output format:
+Example output format for midi-writer-js v2:
 \`\`\`javascript
 function(MidiWriter) {
   const track = new MidiWriter.Track();
