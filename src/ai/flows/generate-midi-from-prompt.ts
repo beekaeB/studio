@@ -67,6 +67,11 @@ const generateMidiFlow = ai.defineFlow(
     if (!output) {
       throw new Error('AI failed to generate MIDI data.');
     }
-    return output;
+    // The AI sometimes wraps the code in markdown, so we need to clean it.
+    const cleanedMidiData = output.midiData.replace(/```javascript/g, '').replace(/```/g, '').trim();
+    return {
+        ...output,
+        midiData: cleanedMidiData,
+    };
   }
 );
