@@ -7,24 +7,11 @@
  * compiled into a playable .mid file that the user can download.
  *
  * @exports generateMidi - The main function to generate MIDI files from prompts.
- * @exports GenerateMidiInput - The input type for the generateMidi function.
- * @exports GenerateMidiOutput - The return type for the generateMidi function.
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { GenerateMidiInputSchema, GenerateMidiOutputSchema, GenerateMidiInput, GenerateMidiOutput } from './types';
 
-const GenerateMidiInputSchema = z.object({
-  prompt: z.string().describe('A text prompt describing a musical idea.'),
-  duration: z.number().describe('The desired duration of the song in seconds.'),
-});
-export type GenerateMidiInput = z.infer<typeof GenerateMidiInputSchema>;
-
-const GenerateMidiOutputSchema = z.object({
-  description: z.string().describe('A textual description of the generated musical piece.'),
-  midiData: z.string().describe('A self-contained Javascript function that returns an array of MidiWriter.Track objects.'),
-});
-export type GenerateMidiOutput = z.infer<typeof GenerateMidiOutputSchema>;
 
 export async function generateMidi(input: GenerateMidiInput): Promise<GenerateMidiOutput> {
   return generateMidiFlow(input);
