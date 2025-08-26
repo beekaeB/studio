@@ -5,7 +5,7 @@ import { generateMidi, type GenerateMidiInput } from '@/ai/flows/generate-midi-f
 export async function generateMidiAction(input: GenerateMidiInput): Promise<{ midiData: string; description: string; } | { error: string }> {
   try {
     const result = await generateMidi(input);
-    if (!result.midiData || !result.description) {
+    if (!result?.midiData || !result?.description) {
         throw new Error("AI did not return valid MIDI data. Please try a different prompt.");
     }
     return { midiData: result.midiData, description: result.description };
