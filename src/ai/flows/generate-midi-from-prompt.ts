@@ -62,6 +62,10 @@ const generateMidiFlow = ai.defineFlow(
     name: 'generateMidiFlow',
     inputSchema: GenerateMidiInputSchema,
     outputSchema: GenerateMidiOutputSchema,
+    rateLimit: {
+        requests: 7,
+        per: 'minute'
+    }
   },
   async (input) => {
     const {output} = await generateMidiPrompt(input);
