@@ -69,13 +69,20 @@ const generateMidiFlow = ai.defineFlow(
   },
   async (input) => {
     const {output} = await generateMidiPrompt(input);
-    if (!output) {
-      throw new Error('AI failed to generate MIDI data.');
+    
+    if (!output?.midiData || !output?.description) {
+      throw new Error('AI failed to generate a valid response. Please try a different prompt.');
     }
+
     // The AI sometimes wraps the code in markdown, so we need to clean it.
     const cleanedMidiData = output.midiData.replace(/```javascript/g, '').replace(/```/g, '').trim();
+    
+    if (!cleanedMidiData.startsWith('function(MidiWriter)')) {
+        throw new Error('AI returned MIDI data in an unexpected format. Please try again.');
+    }
+
     return {
-        ...output,
+        description: output.description,
         midiData: cleanedMidiData,
     };
   }
