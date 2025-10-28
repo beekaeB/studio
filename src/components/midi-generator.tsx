@@ -46,12 +46,39 @@ export function MidiGenerator() {
         return;
     }
     try {
-      // The AI now returns a string that is a full function definition.
-      // We wrap it in parentheses and call it to get the function, then execute it.
-      const buildTracks = new Function(`return (${midiJsCode})`)();
-      const tracks = buildTracks(MidiWriter);
+      const track = new MidiWriter.Track();
+      // This regex is intentionally simple. It looks for note events and extracts the content inside the parentheses.
+      const noteEventRegex = /new MidiWriter\.NoteEvent\(([\s\S]*?)\)/g;
       
-      const writer = new MidiWriter.Writer(tracks);
+      let match;
+      let hasEvents = false;
+
+      // Extract all note events from the AI-generated Javascript code.
+      while ((match = noteEventRegex.exec(midiJsCode)) !== null) {
+        hasEvents = true;
+        const objectStr = match[1];
+
+        // Securely parse the pitch and duration from the note event string using regex.
+        // This avoids using eval() or new Function(), which is a major security risk.
+        const pitchMatch = /pitch\s*:\s*\[(.*?)\]/.exec(objectStr);
+        const durationMatch = /duration\s*:\s*('(.*?)'|"(.*?)")/.exec(objectStr);
+
+        if (pitchMatch && durationMatch) {
+            const pitchStr = pitchMatch[1];
+            const pitch = pitchStr.split(',').map(p => p.trim().replace(/['"]/g, ''));
+
+            const duration = durationMatch[2] || durationMatch[3];
+            track.addEvent(new MidiWriter.NoteEvent({ pitch, duration }));
+        } else {
+            console.warn("Could not parse a NoteEvent, skipping.", objectStr);
+        }
+      }
+
+      if (!hasEvents) {
+        throw new Error("No valid MIDI note events found in the generated code.");
+      }
+
+      const writer = new MidiWriter.Writer([track]);
       const dataUri = writer.dataUri();
       
       const link = document.createElement('a');
@@ -65,7 +92,7 @@ export function MidiGenerator() {
       toast({
         variant: "destructive",
         title: "Download Failed",
-        description: "There was an error creating the MIDI file from the generated code. The AI might have provided an invalid format.",
+        description: error instanceof Error ? error.message : "There was an error creating the MIDI file from the generated code. The AI might have provided an invalid format.",
       });
     }
   }, [MidiWriter, toast]);
