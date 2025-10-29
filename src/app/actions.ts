@@ -1,7 +1,7 @@
 'use server';
 
-import {generateMidiFlow} from '@/ai/flows/generate-midi-from-prompt';
-import {type GenerateMidiInput} from '@/ai/flows/types';
+import {researchFlow} from '@/ai/flows/research-flow';
+import {type ResearchInput} from '@/ai/flows/research-flow';
 
 function getApiKey(): string {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -13,21 +13,19 @@ function getApiKey(): string {
   return apiKey;
 }
 
-export async function generateMidiAction(
-  input: GenerateMidiInput
-): Promise<{midiData: string; description: string} | {error: string}> {
+export async function performResearchAction(
+  input: ResearchInput
+): Promise<{researchSummary: string} | {error: string}> {
   try {
-    const apiKey = getApiKey();
-    const result = await generateMidiFlow(input, {apiKey});
-    // The result from the flow is already validated, so we can return it directly.
-    return {midiData: result.midiData, description: result.description};
+    getApiKey(); // Check for key, but don't pass it explicitly
+    const result = await researchFlow(input);
+    return {researchSummary: result.researchSummary};
   } catch (e: any) {
-    console.error('Error in generateMidiAction:', e);
-    // Ensure a user-friendly message is always returned.
+    console.error('Error in performResearchAction:', e);
     const message =
       e instanceof Error
         ? e.message
-        : 'An unknown error occurred during MIDI generation.';
+        : 'An unknown error occurred during research.';
     return {error: message};
   }
 }
