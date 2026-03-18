@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "extreme-deepthink": {
+      "source": "./extreme-deepthink",
+      "sourceType": "local",
+      "computedHash": "a4a9254379927fd1cd937ae4b21263b429f72854323a7f35428388b07b9f898c"
+    }
+  }
+}
