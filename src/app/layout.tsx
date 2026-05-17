@@ -3,8 +3,8 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: 'MidiGenius',
-  description: 'Turn your ideas into melodies with AI.',
+  title: 'AudioBook Converter',
+  description: 'Convert PDFs, Word docs, and text files into WAV audiobooks using Gemini TTS.',
 };
 
 export default function RootLayout({
